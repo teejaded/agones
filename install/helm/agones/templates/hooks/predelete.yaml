@@ -1,0 +1,20 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: pi-with-timeout
+  annotations:
+    "helm.sh/hook": "pre-delete"
+spec:
+  backoffLimit: 2
+  activeDeadlineSeconds: 120
+  template:
+    spec:
+      containers:
+      - name: kubectl
+        image: lachlanevenson/k8s-kubectl:v1.12.1
+        command: ["/bin/sh", "-c"]
+        args:
+          - kubectl get fleets.stable.agones.dev --all-namespaces --no-headers=true | \
+            awk '{print $1 " " $2}' | \
+            xargs -P 10 -n 2 kubectl delete fleet -n
+      restartPolicy: Always
